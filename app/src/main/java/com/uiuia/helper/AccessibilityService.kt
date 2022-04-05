@@ -21,6 +21,10 @@ class AccessibilityService : AccessibilityService() {
     override fun onAccessibilityEvent(ae: AccessibilityEvent?) {
         Log.d("accessibility", "onAccessibilityEvent")
         //val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+
+        val firstUnSolveTask = tasks.firstOrNull{ !it.isSolved }
+        val firstUnSolveWork = firstUnSolveTask?.works?.firstOrNull { !it.isSolved }
+
         ae?.let { ae ->
             if (TextUtils.equals(ae.packageName, "com.tencent.wework")) {
                 val nodes = getChildNode(rootInActiveWindow)?.forEach {
