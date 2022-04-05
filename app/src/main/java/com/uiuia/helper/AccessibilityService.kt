@@ -23,23 +23,29 @@ class AccessibilityService : AccessibilityService() {
         //val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         ae?.let { ae ->
             if (TextUtils.equals(ae.packageName, "com.tencent.wework")) {
-                val nodes = getChildNode(rootInActiveWindow)
-
+                val nodes = getChildNode(rootInActiveWindow)?.forEach {
+                    Log.d("cavs", "node:${it?.text}")
+//                    if(it?.text?.equals("消息")==true){
+//                        Log.d("accessibility","equals 消息:${it?.text}")
+//                        it?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+//                        rootInActiveWindow?.findAccessibilityNodeInfosByViewId(it.viewIdResourceName)?.firstOrNull()?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+//                    }
+                }
             }
         }
     }
 
-    private fun doTask(){
+    private fun doTask() {
 
     }
 
-    private fun checkPage(){
+    private fun checkPage() {
 
     }
 
     private fun getChildNode(
         node: AccessibilityNodeInfo?,
-        level: Int? = 2,
+        level: Int? = null,
         currentLevel: Int? = null
     ): MutableList<AccessibilityNodeInfo?>? {
         if (level != null && (currentLevel ?: 0) >= level) return null
@@ -49,9 +55,20 @@ class AccessibilityService : AccessibilityService() {
             for (index in 0..size) {
                 val child: AccessibilityNodeInfo? = it.getChild(index)
                 try {
-                    if (child?.viewIdResourceName != null || child?.text != null || child?.className != null) {
+                    if ((child?.viewIdResourceName != null) || (child?.text != null) || (child?.className != null)) {
                         nodes.add(child)
                     }
+                    if (TextUtils.equals(child?.text?.toString(),"微餐时代")) {
+                        Log.d("cavs", "广东爱瓦力科技 click")
+                        var parentNode:AccessibilityNodeInfo? = child
+                        for (index in 0..5){
+                            parentNode = parentNode?.parent
+                            parentNode?.performAction(AccessibilityNodeInfo.ACTION_FOCUS)
+                            parentNode?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
+                        }
+
+                    }
+                    //Log.d("cavs", "child id:${child?.viewIdResourceName ?: "null"}  text:${child?.text ?: "null"}")
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }
@@ -59,7 +76,7 @@ class AccessibilityService : AccessibilityService() {
                     it.getChild(index),
                     level,
                     (currentLevel ?: 0) + 1
-                )?.let { nodes -> nodes.addAll(nodes) }
+                )?.let { its -> nodes.addAll(its) }
             }
         }
         return nodes
