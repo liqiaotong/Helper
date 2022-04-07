@@ -4,10 +4,14 @@ import android.content.Context
 
 object CommonUtils {
 
-    fun startAppByPackageName(context: Context, packageName: String) {
-        packageName?.let {
-            val launchIntent = context.packageManager.getLaunchIntentForPackage(it)
-            context.startActivity(launchIntent)
+    fun startAppByPackageName(context: Context?, packageName: String) {
+        try {
+            packageName?.let {
+                val launchIntent = context?.packageManager?.getLaunchIntentForPackage(it)
+                launchIntent?.let { intent -> context?.startActivity(intent) }
+            }
+        }catch (e:Exception){
+            e.printStackTrace()
         }
     }
 

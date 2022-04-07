@@ -31,6 +31,13 @@ class HelperService : AccessibilityService() {
 
     override fun onCreate() {
         super.onCreate()
+
+        try {
+            broadcast?.let { unregisterReceiver(it) }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
         try {
             broadcast = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
@@ -43,7 +50,7 @@ class HelperService : AccessibilityService() {
                             asTasks?.addAll(newTasks)
                         }
                     } catch (e: Exception) {
-
+                        e.printStackTrace()
                     }
                 }
             }
@@ -63,7 +70,8 @@ class HelperService : AccessibilityService() {
     override fun onAccessibilityEvent(ae: AccessibilityEvent?) {
         Log.d("accessibility", "onAccessibilityEvent")
         accessibilityEvent = ae
-        doTask(ae)
+        //doTask(ae)
+        getNodes(rootInActiveWindow, 5, log = true)
     }
 
     private fun doTask(ae: AccessibilityEvent?) {
@@ -232,36 +240,44 @@ class HelperService : AccessibilityService() {
     private fun getNodes(
         node: AccessibilityNodeInfo?,
         level: Int? = null,
-        currentLevel: Int? = null, log: Boolean? = false
+        currentLevel: Int? = null,
+        log: Boolean? = false
     ): MutableList<AccessibilityNodeInfo?>? {
-        if (level != null && (currentLevel ?: 0) >= level) return null
-        val nodes: MutableList<AccessibilityNodeInfo?> = ArrayList()
+        if ((node == null) || (level!=null && (currentLevel ?: 0) >= level)) return null
         node?.let {
-            var size = if (it.childCount <= 0) 0 else (it.childCount - 1)
-            for (index in 0..size) {
-                val child: AccessibilityNodeInfo? = it.getChild(index)
+            val nodes: MutableList<AccessibilityNodeInfo?> = ArrayList()
+
+            fun addNodeInfo(nodeInfo:AccessibilityNodeInfo?){
                 try {
-                    if ((child?.viewIdResourceName != null) || (child?.text != null) || (child?.className != null)) {
-                        nodes.add(child)
-                    }
-                    if (log == true) {
-                        Log.d(
-                            "cavs",
-                            "child id:${child?.viewIdResourceName ?: "null"}  text:${child?.text ?: "null"}"
-                        )
+                    if (log == true) Log.d(
+                        "cavs",
+                        "------------->child level:$level-$currentLevel id:${nodeInfo?.viewIdResourceName ?: "null"}  text:${nodeInfo?.text ?: "null"}  class:${nodeInfo?.className ?: "null"}"
+                    )
+                    if ((nodeInfo?.viewIdResourceName != null) || (nodeInfo?.text != null) || (nodeInfo?.className != null)) {
+                        nodes.add(nodeInfo)
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    Log.d("cavs", "getNodes e:${e.printStackTrace()}")
+                    if (log == true) Log.d("cavs", "!!get nodes error:${e.printStackTrace()}")
                 }
+            }
+
+            if(currentLevel==null) addNodeInfo(it)
+
+            var size = if (it.childCount <= 0) 0 else (it.childCount - 1)
+            for (index in 0 until size) {
+                val child: AccessibilityNodeInfo? = it.getChild(index)
+                addNodeInfo(child)
                 getNodes(
-                    it.getChild(index),
+                    child,
                     level,
-                    (currentLevel ?: 0) + 1
+                    (currentLevel ?: 0) + 1,
+                    log = log
                 )?.let { its -> nodes.addAll(its) }
             }
+            return nodes
         }
-        return nodes
+        return null
     }
 
 
