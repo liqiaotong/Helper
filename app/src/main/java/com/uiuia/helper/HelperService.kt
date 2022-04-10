@@ -2,6 +2,7 @@ package com.uiuia.helper
 
 import android.accessibilityservice.AccessibilityService
 import android.content.*
+import android.graphics.Rect
 import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
@@ -243,16 +244,19 @@ class HelperService : AccessibilityService() {
         currentLevel: Int? = null,
         log: Boolean? = false
     ): MutableList<AccessibilityNodeInfo?>? {
-        if ((node == null) || (level!=null && (currentLevel ?: 0) >= level)) return null
+        if ((node == null) || (level != null && (currentLevel ?: 0) >= level)) return null
         node?.let {
             val nodes: MutableList<AccessibilityNodeInfo?> = ArrayList()
 
-            fun addNodeInfo(nodeInfo:AccessibilityNodeInfo?){
+            fun addNodeInfo(nodeInfo: AccessibilityNodeInfo?) {
                 try {
-                    if (log == true) Log.d(
+                    if (log == true) {
+                        var rect = Rect()
+                        nodeInfo?.getBoundsInScreen(rect)
+                        Log.d(
                         "cavs",
-                        "------------->child level:$level-$currentLevel id:${nodeInfo?.viewIdResourceName ?: "null"}  text:${nodeInfo?.text ?: "null"}  class:${nodeInfo?.className ?: "null"}"
-                    )
+                        "------------->child level:$level-${currentLevel?:0} id:${nodeInfo?.viewIdResourceName ?: "null"}  text:${nodeInfo?.text ?: "null"}  class:${nodeInfo?.className ?: "null"} rect:${rect.top} ${rect.left} ${rect.bottom} ${rect.right}"
+                    )}
                     if ((nodeInfo?.viewIdResourceName != null) || (nodeInfo?.text != null) || (nodeInfo?.className != null)) {
                         nodes.add(nodeInfo)
                     }
@@ -262,7 +266,7 @@ class HelperService : AccessibilityService() {
                 }
             }
 
-            if(currentLevel==null) addNodeInfo(it)
+            if (currentLevel == null) addNodeInfo(it)
 
             var size = if (it.childCount <= 0) 0 else (it.childCount - 1)
             for (index in 0 until size) {

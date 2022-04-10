@@ -16,7 +16,7 @@ object HandlerUtils {
                 try {
                     if (errorAction != null) errorAction()
                 }catch (e:Exception){
-
+                    e.printStackTrace()
                 }
             }
         }
