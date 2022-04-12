@@ -3,14 +3,11 @@ package com.uiuia.helper
 import android.accessibilityservice.AccessibilityService
 import android.content.*
 import android.graphics.Rect
-import android.os.Build
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 
 import android.text.TextUtils
-import android.view.accessibility.AccessibilityWindowInfo
-import androidx.annotation.RequiresApi
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.reflect.TypeToken
@@ -20,12 +17,12 @@ import java.io.OutputStream
 
 class HelperService : AccessibilityService() {
 
-    private val gson: Gson = GsonBuilder().create()
-
     companion object {
-        const val HelperServiceClass = "com.uiuia.helper.HelperService"
+        const val HelperServiceReceiver = "com.uiuia.helper.HelperService_Receiver"
+        const val HelperServiceSend = "com.uiuia.helper.HelperService_Send"
     }
 
+    private val gson: Gson = GsonBuilder().create()
     private var broadcast: BroadcastReceiver? = null
     private var accessibilityEvent: AccessibilityEvent? = null
     private val asTasks: MutableList<AsTask> = ArrayList()
@@ -43,21 +40,24 @@ class HelperService : AccessibilityService() {
             broadcast = object : BroadcastReceiver() {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     try {
-                        val data = intent?.getStringExtra("tasks")
-                        if (!TextUtils.isEmpty(data)) {
-                            val type = object : TypeToken<MutableList<AsTask>>() {}.type
-                            var newTasks = gson.fromJson<MutableList<AsTask>>(data, type)
-                            asTasks?.clear()
-                            asTasks?.addAll(newTasks)
-                        }
+                        updateTasker(intent?.getStringExtra("send_data_to_tasks"))
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
                 }
             }
-            registerReceiver(broadcast, IntentFilter(HelperServiceClass))
+            registerReceiver(broadcast, IntentFilter(HelperServiceReceiver))
         } catch (e: Exception) {
             e.printStackTrace()
+        }
+    }
+
+    private fun updateTasker(taskerData: String?) {
+        if (!TextUtils.isEmpty(taskerData)) {
+            val type = object : TypeToken<MutableList<AsTask>>() {}.type
+            val newTasks = gson.fromJson<MutableList<AsTask>>(taskerData, type)
+            asTasks?.clear()
+            asTasks?.addAll(newTasks)
         }
     }
 
@@ -72,7 +72,23 @@ class HelperService : AccessibilityService() {
         Log.d("accessibility", "onAccessibilityEvent")
         accessibilityEvent = ae
         //doTask(ae)
-        getNodes(rootInActiveWindow, 5, log = true)
+
+        if (true) {
+            getNodes(rootInActiveWindow, 5, log = true)?.let {
+                val layouts = it.map { ani->
+                    val rect = Rect()
+                    ani?.getBoundsInScreen(rect)
+                    rect
+                }
+                if(layouts?.isNotEmpty() == true) {
+                    sendBroadcast(Intent()?.apply {
+                        action = HelperServiceSend
+                        putExtra("get_node_info_package", rootInActiveWindow?.packageName ?: "")
+                        putExtra("get_node_info", gson.toJson(layouts))
+                    })
+                }
+            }
+        }
     }
 
     private fun doTask(ae: AccessibilityEvent?) {
@@ -188,7 +204,7 @@ class HelperService : AccessibilityService() {
 
                         finalNode?.let {
                             var rootNode: AccessibilityNodeInfo? = it
-                            for (level in 0 until (targetNode?.parentLevel)) {
+                            for (level in 0 until (targetNode?.parentLevel ?: 0)) {
                                 rootNode = it.parent
                             }
                             rootNode?.performAction(AccessibilityNodeInfo.ACTION_CLICK)
@@ -254,9 +270,10 @@ class HelperService : AccessibilityService() {
                         var rect = Rect()
                         nodeInfo?.getBoundsInScreen(rect)
                         Log.d(
-                        "cavs",
-                        "------------->child level:$level-${currentLevel?:0} id:${nodeInfo?.viewIdResourceName ?: "null"}  text:${nodeInfo?.text ?: "null"}  class:${nodeInfo?.className ?: "null"} rect:${rect.top} ${rect.left} ${rect.bottom} ${rect.right}"
-                    )}
+                            "cavs",
+                            "------------->child level:$level-${currentLevel ?: 0} id:${nodeInfo?.viewIdResourceName ?: "null"}  text:${nodeInfo?.text ?: "null"}  class:${nodeInfo?.className ?: "null"} rect:${rect.top} ${rect.left} ${rect.bottom} ${rect.right}"
+                        )
+                    }
                     if ((nodeInfo?.viewIdResourceName != null) || (nodeInfo?.text != null) || (nodeInfo?.className != null)) {
                         nodes.add(nodeInfo)
                     }

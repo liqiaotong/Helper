@@ -3,7 +3,9 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Users/liqiaotong/AndroidStudioProjects/Helper/app/src/main/res/layout/activity_layout.xml" value="0.14583333333333334" />
         <entry key="..\:/Users/liqiaotong/AndroidStudioProjects/Helper/app/src/main/res/layout/activity_main.xml" value="0.21875" />
+        <entry key="..\:/Users/liqiaotong/AndroidStudioProjects/Helper/app/src/main/res/layout/layout_floating_button.xml" value="0.20208333333333334" />
         <entry key="..\:/Users/liqiaotong/AndroidStudioProjects/Helper/app/src/main/res/xml/accessibility.xml" value="0.2957427536231884" />
       </map>
     </option>

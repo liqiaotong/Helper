@@ -1,14 +1,24 @@
 package com.uiuia.helper
 
-import androidx.appcompat.app.AppCompatActivity
-import android.os.Bundle
-import kotlinx.android.synthetic.main.activity_main.*
 import android.content.Intent
+import android.graphics.Rect
+import android.os.Bundle
 import android.provider.Settings
+import android.util.Log
+import android.view.View
+import android.widget.Button
+import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
+import kotlinx.android.synthetic.main.activity_main.*
 
 
 class MainActivity : AppCompatActivity() {
+
+
+
+    private var floatingButton: FloatingButton? = null
+    private var dismissLayoutUnit: ((View?) -> Unit?)? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -29,41 +39,33 @@ class MainActivity : AppCompatActivity() {
             val tasksGson = Gson().toJson(tasks)
 
             sendBroadcast(Intent()?.apply {
-                action = HelperService.HelperServiceClass
-                putExtra("tasks", tasksGson)
+                action = HelperService.HelperServiceReceiver
+                putExtra("send_data_to_tasks", tasksGson)
             })
+        }
+
+        dialogPermission?.setOnClickListener {
+            applicationContext?.let {
+                if (floatingButton == null) {
+                    floatingButton = FloatingButton(this)
+                    floatingButton?.setOnClickListener {
+                        startActivity(Intent(this@MainActivity, LayoutActivity::class.java))
+                    }
+                }
+                floatingButton?.let { fb -> dismissLayoutUnit = ViewUtils.showFullFloatingWindow(it, fb) }
+            }
+        }
+
+        closeDialogPermission?.setOnClickListener {
+            dismissLayoutUnit?.let { it -> it(floatingButton) }
         }
 
     }
 
+
     private fun getTestTasks(): MutableList<AsTask> {
         val asTasks: MutableList<AsTask> = ArrayList()
         val task = AsTask()
-
-        var clickGroup = AsWork()?.apply {
-            pageNodes = arrayListOf(
-                AsWork.Node()?.apply {
-                    id = "com.tencent.wework:id/g3u"
-                    text = "已阅读并同意 软件许可及服务协议 和 隐私政策"
-                },
-                AsWork.Node()?.apply {
-                    id = "com.tencent.wework:id/a_c"
-                    text = "微信登录"
-                }, AsWork.Node()?.apply {
-                    id = "com.tencent.wework:id/hmv"
-                    text = "手机号登录"
-                })
-            assistAction = AsWork.AssistAction()?.apply {
-                targetNode = AsWork.Node()?.apply {
-                    id = "com.tencent.wework:id/a_c"
-                    text = "微信登录"
-                }
-                action = AssistActionEnum.CLICK
-            }
-            delay = 1500
-            packageName = "com.tencent.wework"
-            workType = WorkEnum.ASSIST
-        }
 
 //        var clickAgreement = AsWork()?.apply {
 //            pageNodes = arrayListOf(
