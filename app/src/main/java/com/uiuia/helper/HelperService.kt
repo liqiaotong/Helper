@@ -78,9 +78,14 @@ class HelperService : AccessibilityService() {
                 val layouts = it.map { ani->
                     val rect = Rect()
                     ani?.getBoundsInScreen(rect)
-                    rect
+                    LayoutEntity()?.apply {
+                        this.rect = rect
+                        this.id = ani?.viewIdResourceName
+                        this.content = ani?.text?.toString()
+                        this.type = ani?.className?.toString()
+                    }
                 }
-                if(layouts?.isNotEmpty() == true) {
+                if(layouts?.isNotEmpty()) {
                     sendBroadcast(Intent()?.apply {
                         action = HelperServiceSend
                         putExtra("get_node_info_package", rootInActiveWindow?.packageName ?: "")

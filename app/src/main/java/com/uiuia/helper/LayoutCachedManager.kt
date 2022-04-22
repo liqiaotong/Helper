@@ -15,9 +15,9 @@ object LayoutCachedManager {
     private val layoutsMap: HashMap<String, MutableList<LayoutEntity>?> = HashMap()
     private var lastCachedPackageName: String? = ""
     private var broadcast: BroadcastReceiver? = null
-    private var callback:LayoutCachedCallback? = null
+    private var callback: LayoutCachedCallback? = null
 
-    fun setLayoutCachedCallback(callback:LayoutCachedCallback?){
+    fun setLayoutCachedCallback(callback: LayoutCachedCallback?) {
         this.callback = callback
     }
 
@@ -29,12 +29,15 @@ object LayoutCachedManager {
         Log.d("vvsa", "layoutview updateLayout datas packagename:$packageName")
         if (TextUtils.equals(packageName, "com.uiuia.helper")) return
         if (!TextUtils.isEmpty(data)) {
-            val type = object : TypeToken<MutableList<Rect>?>() {}.type
-            val rects = Gson().fromJson<MutableList<Rect>?>(data, type)
-            val layouts = rects?.map { LayoutEntity().apply { rect = it } }?.toMutableList()
-            lastCachedPackageName = packageName
-            layouts?.let { layoutsMap?.put(packageName ?: "", it) }
-            callback?.let { it.update(packageName,layouts) }
+            try {
+                val type = object : TypeToken<MutableList<LayoutEntity>?>() {}.type
+                val layouts = Gson().fromJson<MutableList<LayoutEntity>?>(data, type)
+                lastCachedPackageName = packageName
+                layouts?.let { layoutsMap?.put(packageName ?: "", it) }
+                callback?.let { it.update(packageName, layouts) }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 
@@ -50,8 +53,8 @@ object LayoutCachedManager {
                 override fun onReceive(context: Context?, intent: Intent?) {
                     try {
                         val packageName = intent?.getStringExtra("get_node_info_package")
-                        val rects = intent?.getStringExtra("get_node_info")
-                        saveLayouts(packageName, rects)
+                        val layouts = intent?.getStringExtra("get_node_info")
+                        saveLayouts(packageName, layouts)
                     } catch (e: Exception) {
                         e.printStackTrace()
                     }
@@ -65,6 +68,6 @@ object LayoutCachedManager {
 
 }
 
-interface LayoutCachedCallback{
-    fun update(packageName: String?,layouts:MutableList<LayoutEntity>?)
+interface LayoutCachedCallback {
+    fun update(packageName: String?, layouts: MutableList<LayoutEntity>?)
 }
